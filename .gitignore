@@ -101,5 +101,4 @@ ENV/
 .mypy_cache/
 
 .idea/
-
-prova.py
+tmp/
