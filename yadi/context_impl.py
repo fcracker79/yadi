@@ -1,6 +1,7 @@
-from yadi import decorators
-from yadi.context import Context, Scope, SINGLETON, PROTOTYPE
 import typing
+
+from yadi import bean_factories
+from yadi.context import Context, Scope, SINGLETON, PROTOTYPE
 
 
 class ScopeDelegationContext(Context):
@@ -18,7 +19,7 @@ class ScopeDelegationContext(Context):
 
     def get_bean(self, key: typing.Union[str, type]):
         if not isinstance(key, str):
-            key = decorators.bean_name_from_type(key)
+            key = bean_factories.bean_name_from_type(key)
 
         scope_name = self._bean_scopes[key]
         if not scope_name:
@@ -26,7 +27,7 @@ class ScopeDelegationContext(Context):
         result = self._scopes[scope_name].get(key)
         if not result:
             result = self._object_factories[key](self)
-            for cur_key in decorators.get_all_keys_from_type(type(result)):
+            for cur_key in bean_factories.get_all_keys_from_type(type(result)):
                 self._scopes[scope_name].set(cur_key, result)
             self._scopes[scope_name].set(key, result)
         return result

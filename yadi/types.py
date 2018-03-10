@@ -1,8 +1,6 @@
 import typing
 
-
-def bean_name_from_type(object_type):
-    return '{}/{}'.format(object_type.__module__, object_type.__name__)
+from yadi import bean_factories
 
 
 class YadiMeta(typing.TypingMeta, type):
@@ -14,7 +12,7 @@ class YadiMeta(typing.TypingMeta, type):
             orig_type, name = arg
             orig_type = orig_type
         else:
-            orig_type, name = arg, bean_name_from_type(arg)
+            orig_type, name = arg, bean_factories.bean_name_from_type(arg)
 
         class _yadi(orig_type):
             __yadi__ = name
