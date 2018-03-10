@@ -39,11 +39,6 @@ class ScopeDelegationContext(Context):
         if not result:
             result = self._object_factories[key](self)
             self._scopes[scope_name].set(key, result)
-            # for cur_key in bean_factories.get_all_keys_from_type(type(result)):
-            #     result = self._scopes[scope_name].get(key)
-            #     if not result:
-            #         result = self._object_factories[key](self)
-            #     self._scopes[scope_name].set(cur_key, result)
         return result
 
 
