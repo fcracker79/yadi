@@ -48,3 +48,44 @@ class TestObjectInjection(unittest.TestCase):
         self.assertEqual(Component1, type(c2_class.c1))
         c2_interface = sut.get_bean(Component2I)  # type: Component2
         self.assertIs(c2_class, c2_interface)
+
+    def test_functions_positional_arguments(self):
+        sut = context_impl.BaseScopesContext()
+
+        @decorators.inject(context=sut)
+        class Component:
+            pass
+
+        @decorators.inject(context=sut, name='my_function')
+        def f(a: int, b, c: types.Yadi[Component]):
+            pass
+
+        fun = sut.get_bean('my_function')
+        fun(1, 2)
+
+    def test_functions_keyword_argument(self):
+        sut = context_impl.BaseScopesContext()
+
+        @decorators.inject(context=sut)
+        class Component:
+            pass
+
+        @decorators.inject(context=sut, name='my_function')
+        def f(a: int, b, c: types.Yadi[Component]=None, d: str=None):
+            pass
+
+        fun = sut.get_bean('my_function')
+        fun(1, 2, d='hello')
+
+    def test_functions_of_functions(self):
+        sut = context_impl.BaseScopesContext()
+
+        @decorators.inject(context=sut, name='another_function')
+        def h(x, y, z=None):
+            pass
+
+        @decorators.inject(context=sut, name='my_function')
+        def f(a: int, b, c: types.Yadi['another_function'] = None, d: str = None):
+            c(a, b, z=d)
+
+        sut.get_bean('my_function')(12, 23, d=5)

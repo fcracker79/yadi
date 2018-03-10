@@ -11,6 +11,8 @@ class YadiMeta(typing.TypingMeta, type):
         if isinstance(arg, tuple):
             orig_type, name = arg
             orig_type = orig_type
+        elif isinstance(arg, str):
+            orig_type, name = object, arg
         else:
             orig_type, name = arg, bean_factories.bean_name_from_type(arg)
 

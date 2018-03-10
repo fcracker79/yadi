@@ -17,7 +17,7 @@ class ScopeDelegationContext(Context):
         self._bean_scopes[key] = scope_name
         self._object_factories[key] = obj_factory
 
-    def get_bean(self, key: typing.Union[str, type]):
+    def get_bean(self, key: typing.Union[str, type, callable]):
         if not isinstance(key, str):
             key = bean_factories.bean_name_from_type(key)
 
