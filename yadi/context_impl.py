@@ -23,7 +23,7 @@ class ScopeDelegationContext(Context):
 
         self._bean_scopes[key] = scope
         self._object_factories[key] = obj_factory
-        for cur_key in bean_factories.get_all_keys_from_type(object_type):
+        for cur_key in all_aliases:
             self._aliases[cur_key] = key
         self._aliases[key] = key
 
