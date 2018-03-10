@@ -81,6 +81,6 @@ Contexts
 --------
 All the components are kept in a context.
 
-By default, the `inject` decorator keeps the beans instances in `from yadi.context_impl.DEFAULT_CONTEXT`.
+By default, the `inject` decorator keeps the beans instances in `yadi.context_impl.DEFAULT_CONTEXT`.
 
-You might want to instantiate new contexts and pass it as a `context` keyword argument of `inject` decorator.
+You might want to instantiate a new context and pass it as a `context` keyword argument of `inject` decorator.
