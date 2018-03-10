@@ -9,27 +9,41 @@ class ScopeDelegationContext(Context):
         self._object_factories = dict()  # type: typing.Dict[str, typing.Callable[[Context], object]]
         self._scopes = dict()  # type: typing.Dict[str, Scope]
         self._bean_scopes = dict()  # type: typing.Dict[str, str]
+        self._aliases = dict()  # type: typing.Dict[str, str]
 
     def add_scope(self, scope: Scope):
         self._scopes[scope.name] = scope
 
-    def register_bean(self, key: str, obj_factory: typing.Callable[[Context], object], scope_name: str):
-        self._bean_scopes[key] = scope_name
+    def register_bean(self, key: str, obj_factory: typing.Callable[[Context], object], object_type, scope: str):
+        all_aliases = bean_factories.get_all_keys_from_type(object_type)
+        if not key:
+            all_aliases = list(all_aliases)
+            key = all_aliases[0]
+            all_aliases = all_aliases[1:]
+
+        self._bean_scopes[key] = scope
         self._object_factories[key] = obj_factory
+        for cur_key in bean_factories.get_all_keys_from_type(object_type):
+            self._aliases[cur_key] = key
+        self._aliases[key] = key
 
     def get_bean(self, key: typing.Union[str, type, callable]):
-        if not isinstance(key, str):
-            key = bean_factories.bean_name_from_type(key)
-
+        if isinstance(key, str):
+            key = self._aliases[key]
+        else:
+            key = self._aliases[bean_factories.bean_name_from_type(key)]
         scope_name = self._bean_scopes[key]
         if not scope_name:
             return None
         result = self._scopes[scope_name].get(key)
         if not result:
             result = self._object_factories[key](self)
-            for cur_key in bean_factories.get_all_keys_from_type(type(result)):
-                self._scopes[scope_name].set(cur_key, result)
             self._scopes[scope_name].set(key, result)
+            # for cur_key in bean_factories.get_all_keys_from_type(type(result)):
+            #     result = self._scopes[scope_name].get(key)
+            #     if not result:
+            #         result = self._object_factories[key](self)
+            #     self._scopes[scope_name].set(cur_key, result)
         return result
 
 

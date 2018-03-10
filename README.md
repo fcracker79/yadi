@@ -51,6 +51,8 @@ print(c2.c1 is c3.c1)  # True
 
 Here it is an example of how to inject functions:
 
+[//]: # (tmp/readme_md_2.py)
+
 ```python
 from yadi.context_impl import DEFAULT_CONTEXT
 from yadi.decorators import inject
@@ -74,6 +76,65 @@ def f(a: Yadi[Component], b, c: Yadi['another_function'] = None, d: str = None):
 
 
 DEFAULT_CONTEXT.get_bean('my_function')(23, d=5)  # Function h: <class '__main__.Component'>
+
+```
+
+Scopes
+------
+By default, all the beans are saved as Singleton.
+Each singleton is stored in its context, that is, there is a single instance
+_for each context instance_.
+
+Alternatively, it is possible to save beans as Prototypes, that is, 
+a different instance is generated whenever the bean is referred to.
+
+[//]: # (tmp/readme_md_3.py)
+
+```python
+from yadi import context
+from yadi import types
+from yadi.context_impl import DEFAULT_CONTEXT
+from yadi.decorators import inject
+
+
+@inject(scope=context.PROTOTYPE, name='a component 1')
+class Component1:
+    pass
+
+
+@inject(name='a component 2')
+class Component2:
+    def __init__(
+            self,
+            f1: types.Yadi[Component1],
+            f2: types.Yadi['a component 1']):
+        self.f1, self.f2 = f1, f2
+
+
+@inject(name='a component 3')
+class Component3:
+    def __init__(
+            self,
+            f1: types.Yadi[Component1],
+            f2: types.Yadi['a component 1']):
+        self.f1, self.f2 = f1, f2
+
+
+c2 = DEFAULT_CONTEXT.get_bean('a component 2')  # type: Component2
+c3 = DEFAULT_CONTEXT.get_bean('a component 3')  # type: Component3
+
+print(isinstance(c2.f1, Component1))  # True
+print(isinstance(c2.f2, Component1))  # True
+
+print(isinstance(c3.f1, Component1))  # True
+print(isinstance(c3.f2, Component1))  # True
+
+print(c2.f1 == c2.f2)  # False
+print(c3.f1 == c3.f2)  # False
+print(c2.f1 == c3.f1)  # False
+print(c2.f1 == c3.f2)  # False
+print(c2.f2 == c3.f1)  # False
+print(c2.f2 == c3.f2)  # False
 
 ```
 

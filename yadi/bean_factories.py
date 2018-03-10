@@ -16,6 +16,8 @@ def get_all_keys_from_type(object_type) -> typing.Iterable[str]:
 
 
 def _get_all_subtypes(object_type) -> typing.Iterable[type]:
+    if not hasattr(object_type, '__bases__'):
+        return
     yield object_type
     for supertype in object_type.__bases__:
         yield from _get_all_subtypes(supertype)

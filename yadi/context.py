@@ -23,7 +23,7 @@ class Context(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def register_bean(self, key: str, obj: object, scope_name: str):
+    def register_bean(self, key: str, obj: object, object_type, scope: str):
         pass
 
     @abc.abstractmethod
