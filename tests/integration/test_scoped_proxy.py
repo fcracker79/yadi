@@ -32,7 +32,6 @@ class TestScopedProxy(unittest.TestCase):
         class Component1:
             def __init__(self):
                 self.object_id = random.randint(0, 1000000)
-                print('constructor', threading.current_thread().name, id(self))
 
         @decorators.inject(name='a component')
         class Component2:
