@@ -1,5 +1,6 @@
 import abc
 import itertools
+import threading
 import unittest
 from yadi import decorators, context
 from yadi import context_impl, types
@@ -69,7 +70,6 @@ class TestObjectInjection(unittest.TestCase):
             _COUNTER = 0
 
             def __init__(self):
-                print('dino ', self.__class__._COUNTER)
                 assert 0 == self.__class__._COUNTER
                 self.__class__._COUNTER += 1
 
@@ -103,3 +103,42 @@ class TestObjectInjection(unittest.TestCase):
         for i, couple in enumerate(itertools.product(instances, instances)):
             ca, cb = couple
             self.assertIs(ca, cb)
+
+    def test_custom_scope(self):
+        class ThreadLocalScope(context.Scope):
+            def __init__(self):
+                self._tl = threading.local()
+
+            def get(self, key: str):
+                return getattr(self._tl, key, None)
+
+            def set(self, key: str, obj: object):
+                setattr(self._tl, key, obj)
+
+            @property
+            def name(self):
+                return 'threadlocal'
+
+        context_impl.DEFAULT_CONTEXT.add_scope(ThreadLocalScope())
+
+        @decorators.inject(scope='threadlocal', name='a component 1')
+        class Component1:
+            pass
+        
+        c1 = context_impl.DEFAULT_CONTEXT.get_bean('a component 1')
+        c1_2 = context_impl.DEFAULT_CONTEXT.get_bean('a component 1')
+
+        thread_c1 = []
+        c1_t = None
+
+        def _f():
+            global c1_t
+            c1_t = context_impl.DEFAULT_CONTEXT.get_bean('a component 1')
+            self.assertIs(c1_t, context_impl.DEFAULT_CONTEXT.get_bean('a component 1'))
+            thread_c1.append(c1_t)
+        t = threading.Thread(target=_f)
+        t.start()
+        t.join()
+
+        self.assertIs(c1, c1_2)
+        self.assertIsNot(c1, c1_t)

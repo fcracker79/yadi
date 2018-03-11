@@ -138,6 +138,66 @@ print(c2.f2 == c3.f2)  # False
 
 ```
 
+It is also possible to define custom scopes and add
+them to a context.
+
+Here it is an example of thread-local scope:
+
+[//]: # (tmp/readme_md_3.py)
+
+```python
+import threading
+
+from yadi.context import Scope
+from yadi.context_impl import DEFAULT_CONTEXT
+from yadi.decorators import inject
+
+
+class ThreadLocalScope(Scope):
+    def __init__(self):
+        self._tl = threading.local()
+
+    def get(self, key: str):
+        return getattr(self._tl, key, None)
+
+    def set(self, key: str, obj: object):
+        setattr(self._tl, key, obj)
+
+    @property
+    def name(self):
+        return 'threadlocal'
+
+
+DEFAULT_CONTEXT.add_scope(ThreadLocalScope())
+
+
+@inject(scope='threadlocal', name='a component 1')
+class Component1:
+    pass
+
+
+c1 = DEFAULT_CONTEXT.get_bean('a component 1')
+c1_2 = DEFAULT_CONTEXT.get_bean('a component 1')
+
+thread_c1 = []
+c1_t = None
+
+
+def _f():
+    global c1_t
+    c1_t = DEFAULT_CONTEXT.get_bean('a component 1')
+    print(c1_t == DEFAULT_CONTEXT.get_bean('a component 1'))  # True
+    thread_c1.append(c1_t)
+
+
+t = threading.Thread(target=_f)
+t.start()
+t.join()
+
+print(c1 == c1_2)  # True
+print(c1 == c1_t)  # False
+
+```
 Contexts
 --------
 All the components are kept in a context.
