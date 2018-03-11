@@ -1,11 +1,9 @@
-import typing
-
 from yadi import bean_factories
 
 
-class YadiMeta(typing.TypingMeta, type):
-    def __new__(cls, name, bases, namespace):
-        return super().__new__(cls, name, bases, namespace, _root=True)
+class YadiMeta(type):
+    def __new__(cls, *a, **kw):
+        return super().__new__(cls, *a, **kw)
 
     def __getitem__(self, arg):
         if isinstance(arg, tuple):
