@@ -131,6 +131,148 @@ different instance is generated whenever the bean is referred to.
     print(c2.f2 == c3.f1)  # False
     print(c2.f2 == c3.f2)  # False
 
+It is also possible to define custom scopes and add them to a context.
+
+Here it is an example of thread-local scope:
+
+.. code:: python
+
+    import threading
+
+    from yadi.context import Scope
+    from yadi.context_impl import DEFAULT_CONTEXT
+    from yadi.decorators import inject
+
+
+    class ThreadLocalScope(Scope):
+        def __init__(self):
+            self._tl = threading.local()
+
+        def get(self, key: str):
+            return getattr(self._tl, key, None)
+
+        def set(self, key: str, obj: object):
+            setattr(self._tl, key, obj)
+
+        @property
+        def name(self):
+            return 'threadlocal'
+
+        @property
+        def level(self):
+            return 100
+
+
+    DEFAULT_CONTEXT.add_scope(ThreadLocalScope())
+
+
+    @inject(scope='threadlocal', name='a component 1')
+    class Component1:
+        pass
+
+
+    c1 = DEFAULT_CONTEXT.get_bean('a component 1')
+    c1_2 = DEFAULT_CONTEXT.get_bean('a component 1')
+
+    thread_c1 = []
+    c1_t = None
+
+
+    def _f():
+        global c1_t
+        c1_t = DEFAULT_CONTEXT.get_bean('a component 1')
+        print(c1_t == DEFAULT_CONTEXT.get_bean('a component 1'))  # True
+        thread_c1.append(c1_t)
+
+
+    t = threading.Thread(target=_f)
+    t.start()
+    t.join()
+
+    print(c1 == c1_2)  # True
+    print(c1 == c1_t)  # False
+
+**Scoped proxies** Let's suppose to inject a thread-local scoped bean in
+a singleton. As a result, different thread sharing the same singleton
+should not share the same thread local bean, which is not possible.
+
+In order to solve this issue, YADI creates a proxy around the injected
+bean that delegates any access to the current bean in the context.
+
+More in general, scopes have a ``level`` attribute: if the injected bean
+has a higher scope level than the container bean, the injected bean is
+wrapped into a scoped proxy.
+
+Here it is an example of scoped proxies (don't worry, you do not have to
+do anything to make it work).
+
+.. code:: python
+
+    import random
+    import threading
+
+    from yadi.bean_factories import _ScopedProxy
+    from yadi.context import Scope
+    from yadi.context_impl import DEFAULT_CONTEXT
+    from yadi.decorators import inject
+    from yadi.types import Yadi
+
+
+    class ThreadLocalScope(Scope):
+        def __init__(self):
+            self._tl = threading.local()
+
+        def get(self, key: str):
+            return getattr(self._tl, key, None)
+
+        def set(self, key: str, obj: object):
+            setattr(self._tl, key, obj)
+
+        @property
+        def name(self):
+            return 'threadlocal'
+
+        @property
+        def level(self):
+            return 100
+
+
+    DEFAULT_CONTEXT.add_scope(ThreadLocalScope())
+
+
+    @inject(scope='threadlocal')
+    class Component1:
+        def __init__(self):
+            self.object_id = random.randint(0, 1000000)
+
+
+    @inject(name='a component')
+    class Component2:
+        def __init__(self, f1: Yadi[Component1]):
+            self.f1 = f1
+
+
+    component = DEFAULT_CONTEXT.get_bean('a component')
+    component_thread_id = []
+    print('Main thread, scoped proxy type', type(component.f1) == _ScopedProxy)  # Main thread, scoped proxy type True
+
+
+    def _f():
+        component_thread = DEFAULT_CONTEXT.get_bean('a component')
+        print('Subthread, scoped proxy type', type(component_thread.f1) == _ScopedProxy)
+        component_thread_id.append(component_thread.f1.object_id)
+        print(
+            'Subthread, bean id',
+            component_thread.f1.object_id == DEFAULT_CONTEXT.get_bean('a component').f1.object_id)
+
+
+    t = threading.Thread(target=_f)
+    t.start()
+    t.join()  # Subthread, scoped proxy type True
+              # Subthread, bean id True
+
+    print('Main thread, bean id', component.f1.object_id == component_thread_id[0])  # Main thread, bean id False
+
 Contexts
 --------
 
