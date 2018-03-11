@@ -4,6 +4,7 @@ import threading
 import unittest
 from yadi import decorators, context
 from yadi import context_impl, types
+from yadi.bean_factories import _ScopedProxy
 
 
 class TestObjectInjection(unittest.TestCase):
@@ -38,12 +39,12 @@ class TestObjectInjection(unittest.TestCase):
         c2 = sut.get_bean('a component 2')  # type: Component2
         c3 = sut.get_bean('a component 3')  # type: Component3
 
-        self.assertEqual(Component1, type(c2.f1))
-        self.assertEqual(Component1, type(c2.f2))
-        self.assertEqual(Component1, type(c2.f3))
-        self.assertEqual(Component1, type(c3.f1))
-        self.assertEqual(Component1, type(c3.f2))
-        self.assertEqual(Component1, type(c3.f3))
+        self.assertEqual(_ScopedProxy, type(c2.f1))
+        self.assertEqual(_ScopedProxy, type(c2.f2))
+        self.assertEqual(_ScopedProxy, type(c2.f3))
+        self.assertEqual(_ScopedProxy, type(c3.f1))
+        self.assertEqual(_ScopedProxy, type(c3.f2))
+        self.assertEqual(_ScopedProxy, type(c3.f3))
 
         instances = [c2.f1, c2.f2, c2.f3, c3.f1, c3.f2, c3.f3]
         elements_to_skip = {
@@ -119,26 +120,27 @@ class TestObjectInjection(unittest.TestCase):
             def name(self):
                 return 'threadlocal'
 
+            @property
+            def level(self):
+                return 100
+
         context_impl.DEFAULT_CONTEXT.add_scope(ThreadLocalScope())
 
         @decorators.inject(scope='threadlocal', name='a component 1')
         class Component1:
             pass
-        
+
         c1 = context_impl.DEFAULT_CONTEXT.get_bean('a component 1')
         c1_2 = context_impl.DEFAULT_CONTEXT.get_bean('a component 1')
 
-        thread_c1 = []
-        c1_t = None
+        c1_t = []
 
         def _f():
-            global c1_t
-            c1_t = context_impl.DEFAULT_CONTEXT.get_bean('a component 1')
-            self.assertIs(c1_t, context_impl.DEFAULT_CONTEXT.get_bean('a component 1'))
-            thread_c1.append(c1_t)
+            c1_t.append(context_impl.DEFAULT_CONTEXT.get_bean('a component 1'))
+            self.assertIs(c1_t[0], context_impl.DEFAULT_CONTEXT.get_bean('a component 1'))
         t = threading.Thread(target=_f)
         t.start()
         t.join()
 
         self.assertIs(c1, c1_2)
-        self.assertIsNot(c1, c1_t)
+        self.assertIsNot(c1, c1_t[0])

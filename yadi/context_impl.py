@@ -27,11 +27,15 @@ class ScopeDelegationContext(Context):
             self._aliases[cur_key] = key
         self._aliases[key] = key
 
-    def get_bean(self, key: typing.Union[str, type, callable]):
+    def _key_from_union(self, key: typing.Union[str, type, callable]) -> str:
         if isinstance(key, str):
             key = self._aliases[key]
         else:
             key = self._aliases[bean_factories.bean_name_from_type(key)]
+        return key
+
+    def get_bean(self, key: typing.Union[str, type, callable]):
+        key = self._key_from_union(key)
         scope_name = self._bean_scopes[key]
         if not scope_name:
             return None
@@ -40,6 +44,16 @@ class ScopeDelegationContext(Context):
             result = self._object_factories[key](self)
             self._scopes[scope_name].set(key, result)
         return result
+
+    def bean_scope(self, key: typing.Union[str, type, callable]) -> typing.Optional[Scope]:
+        key = self._key_from_union(key)
+        scope_name = self._bean_scopes[key]
+        if not scope_name:
+            return None
+        return self.scope(scope_name)
+
+    def scope(self, scope_name: str) -> typing.Optional[Scope]:
+        return self._scopes.get(scope_name)
 
 
 class _SingletonScope(Scope):
@@ -56,6 +70,10 @@ class _SingletonScope(Scope):
     def set(self, key: str, obj: object):
         self._beans[key] = obj
 
+    @property
+    def level(self):
+        return 0
+
 
 class _PrototypeScope(Scope):
     @property
@@ -67,6 +85,10 @@ class _PrototypeScope(Scope):
 
     def set(self, key: str, obj: object):
         pass
+
+    @property
+    def level(self):
+        return super(_PrototypeScope, self).level
 
 
 class BaseScopesContext(ScopeDelegationContext):

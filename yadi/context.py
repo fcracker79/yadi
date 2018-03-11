@@ -1,4 +1,5 @@
 import abc
+import sys
 import typing
 
 
@@ -16,6 +17,11 @@ class Scope(metaclass=abc.ABCMeta):
     def set(self, key: str, obj: object):
         pass
 
+    @property
+    @abc.abstractmethod
+    def level(self) -> int:
+        return sys.maxsize
+
 
 class Context(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -28,6 +34,14 @@ class Context(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_bean(self, key: str) -> typing.Optional[object]:
+        pass
+
+    @abc.abstractmethod
+    def bean_scope(self, key: typing.Union[str, type, callable]) -> typing.Optional[Scope]:
+        pass
+
+    @abc.abstractmethod
+    def scope(self, scope_name: str) -> typing.Optional[Scope]:
         pass
 
 

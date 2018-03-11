@@ -15,6 +15,17 @@ def get_all_keys_from_type(object_type) -> typing.Iterable[str]:
     yield from (bean_name_from_type(x) for x in _get_all_subtypes(object_type))
 
 
+class _ScopedProxy:
+    def __init__(self, context: Context, bean_name: str):
+        self._context = context
+        self._bean_name = bean_name
+
+    def __getattr__(self, item):
+        if item in ('_context', '_bean_name'):
+            return super(_ScopedProxy, self).__getattr__(item)
+        return getattr(self._context.get_bean(self._bean_name), item)
+
+
 def _get_all_subtypes(object_type) -> typing.Iterable[type]:
     if not hasattr(object_type, '__bases__'):
         return
@@ -23,7 +34,7 @@ def _get_all_subtypes(object_type) -> typing.Iterable[type]:
         yield from _get_all_subtypes(supertype)
 
 
-def recursive_create(object_type: type):
+def recursive_create(object_type: type, scope: str):
     _EXTERNAL = object()
     if isinstance(object_type, FunctionType):
         arguments = OrderedDict()
@@ -60,9 +71,15 @@ def recursive_create(object_type: type):
             if not hasattr(object_type.__init__, '__annotations__'):
                 return object_type()
 
+            current_scope = context.scope(scope)
+
             for param, arg_type in object_type.__init__.__annotations__.items():
                 bean_name = arg_type.__yadi__
-                bean_instance = context.get_bean(bean_name)
+                bean_scope = context.bean_scope(bean_name)
+                if current_scope.level < bean_scope.level:
+                    bean_instance = _ScopedProxy(context, bean_name)
+                else:
+                    bean_instance = context.get_bean(bean_name)
                 args[param] = bean_instance
             return object_type(**args)
     return _inner
