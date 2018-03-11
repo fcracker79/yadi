@@ -1,3 +1,5 @@
+[![build status](https://img.shields.io/travis/fcracker79/yadi/master.svg?style=flat-square)](https://travis-ci.org/fcracker79/yadi)
+
 YADI
 =================================================
 Yet Another Dependency Injection framework
