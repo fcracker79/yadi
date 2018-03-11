@@ -21,5 +21,8 @@ class YadiMeta(typing.TypingMeta, type):
         return _yadi
 
 
-class Yadi(typing.Final, metaclass=YadiMeta):
+class Yadi(metaclass=YadiMeta):
     __slots__ = ()
+
+    def __new__(self, *args, **kwds):
+        raise TypeError("Cannot instantiate %r" % self.__class__)
