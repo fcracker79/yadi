@@ -5,6 +5,7 @@ from collections import OrderedDict
 from types import FunctionType
 
 from yadi.context import Context
+from yadi.listeners import LifecycleObjectListener
 
 
 def bean_name_from_type(object_type):
@@ -34,7 +35,7 @@ def _get_all_subtypes(object_type) -> typing.Iterable[type]:
         yield from _get_all_subtypes(supertype)
 
 
-def recursive_create(object_type: type, scope: str):
+def recursive_create(object_type: type, scope: str, listener: LifecycleObjectListener):
     _EXTERNAL = object()
     if isinstance(object_type, FunctionType):
         arguments = OrderedDict()
@@ -81,5 +82,7 @@ def recursive_create(object_type: type, scope: str):
                 else:
                     bean_instance = context.get_bean(bean_name)
                 args[param] = bean_instance
-            return object_type(**args)
+            result = object_type(**args)
+            listener.on_create(result)
+            return result
     return _inner

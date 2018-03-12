@@ -296,3 +296,38 @@ All the components are kept in a context.
 By default, the `inject` decorator keeps the beans instances in `yadi.context_impl.DEFAULT_CONTEXT`.
 
 You might want to instantiate a new context and pass it as a `context` keyword argument of `inject` decorator.
+
+Life cycle
+----------
+It is possible to trigger beans whenever one of them is created.
+In order to define the method(s) to trigger, it is necessary to decorated
+them with `post_create`, as follows:
+
+```python
+from yadi.context_impl import DEFAULT_CONTEXT
+from yadi.decorators import inject, post_create
+from yadi.types import Yadi
+
+
+@inject()
+class Component1:
+    pass
+
+@inject()
+class Component2:
+    def __init__(self, c1: Yadi[Component1]):
+        self.c1 = c1
+        self.invoked_post_create = 0
+
+    @post_create
+    def finished_creating(self):
+        print('Component 1:', self.c1)  # Component 1: <__main__.Component1 object at 0x7f42e90d2e48>
+        self.invoked_post_create += 1
+
+
+component_2 = DEFAULT_CONTEXT.get_bean(Component2)  # type: Component2
+print('post_create invokations:', component_2.invoked_post_create)  # post_create invokations: 1
+DEFAULT_CONTEXT.get_bean(Component2)
+print('post_create invokations:', component_2.invoked_post_create)  # post_create invokations: 1
+
+```

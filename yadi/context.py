@@ -2,6 +2,8 @@ import abc
 import sys
 import typing
 
+from yadi import listeners
+
 
 class Scope(metaclass=abc.ABCMeta):
     @property
@@ -23,7 +25,7 @@ class Scope(metaclass=abc.ABCMeta):
         return sys.maxsize
 
 
-class Context(metaclass=abc.ABCMeta):
+class Context(listeners.LifecycleObjectListener, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def add_scope(self, scope: Scope):
         pass
@@ -42,6 +44,10 @@ class Context(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def scope(self, scope_name: str) -> typing.Optional[Scope]:
+        pass
+
+    @abc.abstractmethod
+    def add_listener(self, listener: listeners.YadiListener):
         pass
 
 

@@ -1,15 +1,27 @@
 import typing
 
-from yadi import bean_factories
+from yadi import bean_factories, listeners, listeners_impl
 from yadi.context import Context, Scope, SINGLETON, PROTOTYPE
 
 
-class ScopeDelegationContext(Context):
+class DelegationContext(Context):
+    __slots__ = (
+        '_object_factories',
+        '_scopes',
+        '_bean_scopes',
+        '_aliases',
+        '_post_create_listeners'
+    )
+    _TYPES_2_LIST = {
+        listeners.LifecycleObjectListener: '_post_create_listeners'
+    }
+
     def __init__(self):
         self._object_factories = dict()  # type: typing.Dict[str, typing.Callable[[Context], object]]
         self._scopes = dict()  # type: typing.Dict[str, Scope]
         self._bean_scopes = dict()  # type: typing.Dict[str, str]
         self._aliases = dict()  # type: typing.Dict[str, str]
+        self._post_create_listeners = []  # type: typing.List[listeners.LifecycleObjectListener]
 
     def add_scope(self, scope: Scope):
         self._scopes[scope.name] = scope
@@ -55,6 +67,15 @@ class ScopeDelegationContext(Context):
     def scope(self, scope_name: str) -> typing.Optional[Scope]:
         return self._scopes.get(scope_name)
 
+    def add_listener(self, listener: listeners.YadiListener):
+        for k, v in self._TYPES_2_LIST.items():
+            if isinstance(listener, k):
+                getattr(self, v).append(listener)
+
+    def on_create(self, bean):
+        for listener in self._post_create_listeners:
+            listener.on_create(bean)
+
 
 class _SingletonScope(Scope):
     def __init__(self):
@@ -91,7 +112,7 @@ class _PrototypeScope(Scope):
         return super(_PrototypeScope, self).level
 
 
-class BaseScopesContext(ScopeDelegationContext):
+class BaseScopesContext(DelegationContext):
     def __init__(self):
         super(BaseScopesContext, self).__init__()
         self.add_scope(_SingletonScope())
@@ -99,3 +120,4 @@ class BaseScopesContext(ScopeDelegationContext):
 
 
 DEFAULT_CONTEXT = BaseScopesContext()
+DEFAULT_CONTEXT.add_listener(listeners_impl.FunctionAttributeLifeCycleListener('__yadi_post_create'))
