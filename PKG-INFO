@@ -1,12 +1,12 @@
 Metadata-Version: 1.0
 Name: yadi-framework
-Version: 0.0.5
+Version: 0.0.6
 Summary: Yet another dependency injection framework
 Home-page: https://github.com/fcracker79/yadi
 Author: fcracker79
 Author-email: fcracker79@gmail.com
 License: MIT
-Download-URL: https://github.com/fcracker79/yadi/archive/v0.0.5.zip
+Download-URL: https://github.com/fcracker79/yadi/archive/v0.0.6.zip
 Description: Yet another dependency injection framework
 PKGINFO
 YADI
