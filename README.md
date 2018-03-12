@@ -1,5 +1,5 @@
 [![build status](https://img.shields.io/travis/fcracker79/yadi/master.svg?style=flat-square)](https://travis-ci.org/fcracker79/yadi)
-[![Pypi](https://img.shields.io/pypi/v/yadi-framework.svg)]
+[![Pypi](https://img.shields.io/pypi/v/yadi-framework.svg)](https://img.shields.io/pypi/v/yadi-framework.svg)
 
 YADI
 =================================================
