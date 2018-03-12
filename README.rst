@@ -1,3 +1,5 @@
+|build status| |Pypi|
+
 YADI
 ====
 
@@ -192,9 +194,11 @@ Here it is an example of thread-local scope:
     print(c1 == c1_2)  # True
     print(c1 == c1_t)  # False
 
-**Scoped proxies** Let's suppose to inject a thread-local scoped bean in
-a singleton. As a result, different thread sharing the same singleton
-should not share the same thread local bean, which is not possible.
+**Scoped proxies**
+
+Let's suppose to inject a thread-local scoped bean in a singleton. As a
+result, different thread sharing the same singleton should not share the
+same thread local bean, which is not possible.
 
 In order to solve this issue, YADI creates a proxy around the injected
 bean that delegates any access to the current bean in the context.
@@ -283,3 +287,43 @@ By default, the ``inject`` decorator keeps the beans instances in
 
 You might want to instantiate a new context and pass it as a ``context``
 keyword argument of ``inject`` decorator.
+
+Life cycle
+----------
+
+It is possible to trigger beans whenever one of them is created. In
+order to define the method(s) to trigger, it is necessary to decorated
+them with ``post_create``, as follows:
+
+.. code:: python
+
+    from yadi.context_impl import DEFAULT_CONTEXT
+    from yadi.decorators import inject, post_create
+    from yadi.types import Yadi
+
+
+    @inject()
+    class Component1:
+        pass
+
+    @inject()
+    class Component2:
+        def __init__(self, c1: Yadi[Component1]):
+            self.c1 = c1
+            self.invoked_post_create = 0
+
+        @post_create
+        def finished_creating(self):
+            print('Component 1:', self.c1)  # Component 1: <__main__.Component1 object at 0x7f42e90d2e48>
+            self.invoked_post_create += 1
+
+
+    component_2 = DEFAULT_CONTEXT.get_bean(Component2)  # type: Component2
+    print('post_create invokations:', component_2.invoked_post_create)  # post_create invokations: 1
+    DEFAULT_CONTEXT.get_bean(Component2)
+    print('post_create invokations:', component_2.invoked_post_create)  # post_create invokations: 1
+
+.. |build status| image:: https://img.shields.io/travis/fcracker79/yadi/master.svg?style=flat-square
+   :target: https://travis-ci.org/fcracker79/yadi
+.. |Pypi| image:: https://img.shields.io/pypi/v/yadi-framework.svg
+   :target: https://img.shields.io/pypi/v/yadi-framework.svg
