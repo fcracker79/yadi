@@ -24,7 +24,7 @@ def get_packages(path):
 
 packages = get_packages('yadi')
 setup(name='yadi-framework',
-      version='0.0.4',
+      version='0.0.5',
       description='YADI - Yet another dependency injection framework',
       long_description=readfile('README.rst'),
       url='https://github.com/fcracker79/yadi',
