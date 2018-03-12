@@ -1,4 +1,5 @@
 [![build status](https://img.shields.io/travis/fcracker79/yadi/master.svg?style=flat-square)](https://travis-ci.org/fcracker79/yadi)
+[![Pypi](https://img.shields.io/pypi/v/yadi-framework.svg)]
 
 YADI
 =================================================
@@ -206,6 +207,7 @@ print(c1 == c1_t)  # False
 ```
 
 **Scoped proxies**
+
 Let's suppose to inject a thread-local scoped bean in a singleton.
 As a result, different thread sharing the same singleton should not
 share the same thread local bean, which is not possible.
@@ -302,6 +304,8 @@ Life cycle
 It is possible to trigger beans whenever one of them is created.
 In order to define the method(s) to trigger, it is necessary to decorated
 them with `post_create`, as follows:
+
+[//]: # (tmp/readme_md_5.py)
 
 ```python
 from yadi.context_impl import DEFAULT_CONTEXT
